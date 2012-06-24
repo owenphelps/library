@@ -13,6 +13,10 @@ class NotCheckedOutError(Exception): pass
 class NotTheBorrowerError(Exception): pass
 
 # ----------------------------------------------------------------------
+def equivalent_lists(first, second):
+    assert_equals(sorted(first), sorted(second))
+
+# ----------------------------------------------------------------------
 
 class Book(object):
     BORROWED  = 'borrowed'
@@ -74,16 +78,16 @@ class Book(object):
 
 
         if not (is_borrower or is_reserver):
-            ret.append(dict(rel='reserve', href='/reserve/' + self.isbn))
+            ret.append(dict(rel='reserve', href='/book/' + self.isbn + '/reservations'))
 
         if can_borrow:
-            ret.append(dict(rel='borrow', href='/borrow/' + self.isbn))
+            ret.append(dict(rel='borrow', href='/book/' + self.isbn + '/borrower'))
 
         if is_borrower:
-            ret.append(dict(rel='return', href='/return/' + self.isbn))
+            ret.append(dict(rel='return', href='/book/' + self.isbn + '/return'))
 
         if is_reserver:
-            ret.append(dict(rel='cancel_reservation', href='/cancel_reservation/' + self.isbn))
+            ret.append(dict(rel='cancel', href='/book/' + self.isbn + '/reservations/' + for_user + '/cancel'))
 
         return ret
 
@@ -240,26 +244,26 @@ def test_links_no_borrower():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
 
     expected = []
-    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
-    expected.append(dict(rel='borrow', href='/borrow/ISBN'))
-    assert_equals(book.links('SOMEONE'), expected)
+    expected.append(dict(rel='borrow', href='/book/ISBN/borrower'))
+    expected.append(dict(rel='reserve', href='/book/ISBN/reservations'))
+    equivalent_lists(book.links('SOMEONE'), expected)
 
 def test_links_no_borrower_with_one_reserver_by_reserver():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
 
     expected = []
-    expected.append(dict(rel='borrow', href='/borrow/ISBN'))
-    expected.append(dict(rel='cancel_reservation', href='/cancel_reservation/ISBN'))
-    assert_equals(book.links('RESERVER'), expected)
+    expected.append(dict(rel='borrow', href='/book/ISBN/borrower'))
+    expected.append(dict(rel='cancel', href='/book/ISBN/reservations/RESERVER/cancel'))
+    equivalent_lists(book.links('RESERVER'), expected)
 
 def test_links_no_borrower_with_one_reserver_by_other():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
 
     expected = []
-    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
-    assert_equals(book.links('OTHER'), expected)
+    expected.append(dict(rel='reserve', href='/book/ISBN/reservations'))
+    equivalent_lists(book.links('OTHER'), expected)
 
 def test_links_no_borrower_with_many_reservers_by_reserver():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
@@ -268,9 +272,9 @@ def test_links_no_borrower_with_many_reservers_by_reserver():
     book.reserve('RESERVER 3')
 
     expected = []
-    expected.append(dict(rel='borrow', href='/borrow/ISBN'))
-    expected.append(dict(rel='cancel_reservation', href='/cancel_reservation/ISBN'))
-    assert_equals(book.links('RESERVER'), expected)
+    expected.append(dict(rel='borrow', href='/book/ISBN/borrower'))
+    expected.append(dict(rel='cancel', href='/book/ISBN/reservations/RESERVER/cancel'))
+    equivalent_lists(book.links('RESERVER'), expected)
 
 def test_links_no_borrower_with_many_reservers_by_other():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
@@ -279,29 +283,32 @@ def test_links_no_borrower_with_many_reservers_by_other():
     book.reserve('RESERVER 3')
 
     expected = []
-    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
-    assert_equals(book.links('OTHER'), expected)
+    expected.append(dict(rel='reserve', href='/book/ISBN/reservations'))
+    equivalent_lists(book.links('OTHER'), expected)
 
 def test_links_with_borrower():
-    book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER')
+    book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.check_out('BORROWER')
 
     expected = []
-    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
-    assert_equals(book.links('RESERVER'), expected)
+    expected.append(dict(rel='reserve', href='/book/ISBN/reservations'))
+    equivalent_lists(book.links('RESERVER'), expected)
 
 def test_links_for_borrower():
-    book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER')
+    book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.check_out('BORROWER')
 
     expected = []
-    expected.append(dict(rel='return', href='/return/ISBN'))
-    assert_equals(book.links('BORROWER'), expected)
+    expected.append(dict(rel='return', href='/book/ISBN/return'))
+    equivalent_lists(book.links('BORROWER'), expected)
 
 def test_links_with_borrower_with_many_reservers_by_reserver():
-    book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER')
+    book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.check_out('BORROWER')
     book.reserve('RESERVER')
     book.reserve('RESERVER 2')
     book.reserve('RESERVER 3')
 
     expected = []
-    expected.append(dict(rel='cancel_reservation', href='/cancel_reservation/ISBN'))
-    assert_equals(book.links('RESERVER'), expected)
+    expected.append(dict(rel='cancel', href='/book/ISBN/reservations/RESERVER/cancel'))
+    equivalent_lists(book.links('RESERVER'), expected)
