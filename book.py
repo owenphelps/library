@@ -69,24 +69,30 @@ class Book(object):
         else:
             return Book.AVAILABLE
 
-    def links(self, for_user=''):
-        ret = []
+    def get_options(self, for_user):
         is_borrower = self.borrower and for_user == self.borrower
         is_reserver = for_user in self.reservers
         is_first_reserver = is_reserver and self.reservers[0] == for_user
         can_borrow = (is_first_reserver or not self.reservers) and not self.borrower
 
+        return dict(can_reserve=not(is_borrower or is_reserver),
+                    can_borrow=can_borrow,
+                    can_return=is_borrower,
+                    can_cancel=is_reserver)
 
-        if not (is_borrower or is_reserver):
+    def links(self, for_user=''):
+        options = self.get_options(for_user)
+        ret = []
+        if options['can_reserve']:
             ret.append(dict(rel='reserve', href='/book/' + self.isbn + '/reservations'))
 
-        if can_borrow:
+        if options['can_borrow']:
             ret.append(dict(rel='borrow', href='/book/' + self.isbn + '/borrower'))
 
-        if is_borrower:
+        if options['can_return']:
             ret.append(dict(rel='return', href='/book/' + self.isbn + '/return'))
 
-        if is_reserver:
+        if options['can_cancel']:
             ret.append(dict(rel='cancel', href='/book/' + self.isbn + '/reservations/' + for_user + '/cancel'))
 
         return ret
