@@ -72,6 +72,7 @@ class Book(object):
         is_first_reserver = is_reserver and self.reservers[0] == for_user
         can_borrow = (is_first_reserver or not self.reservers) and not self.borrower
 
+
         if not (is_borrower or is_reserver):
             ret.append(dict(rel='reserve', href='/reserve/' + self.isbn))
 
@@ -80,6 +81,9 @@ class Book(object):
 
         if is_borrower:
             ret.append(dict(rel='return', href='/return/' + self.isbn))
+
+        if is_reserver:
+            ret.append(dict(rel='cancel_reservation', href='/cancel_reservation/' + self.isbn))
 
         return ret
 
@@ -209,7 +213,6 @@ def test_book_cannot_borrow_reserved_book_if_later_reserver():
 
     book.check_out('ANOTHER RESERVER')
 
-
 # ----------------------------------------------------------------------
 
 def test_book_can_return_book_if_borrower():
@@ -233,72 +236,72 @@ def test_book_cannot_return_book_if_not_checked_out():
 
 # ----------------------------------------------------------------------
 
-def test_book_to_json_no_borrower():
+def test_links_no_borrower():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
-    js = book.to_json()
-    print js
-    expected = dict(title='TITLE', description='DESCRIPTION', isbn='ISBN', borrower='', reservers=[], _links=[])
-    expected['_links'].append(dict(rel='reserve', href='/reserve/ISBN'))
-    expected['_links'].append(dict(rel='borrow', href='/borrow/ISBN'))
-    assert_equals(js, json.dumps(expected))
 
-def test_book_to_json_no_borrower_with_one_reserver_by_reserver():
-    book = Book('TITLE', 'DESCRIPTION', 'ISBN')
-    book.reserve('RESERVER')
+    expected = []
+    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
+    expected.append(dict(rel='borrow', href='/borrow/ISBN'))
+    assert_equals(book.links('SOMEONE'), expected)
 
-    js = book.to_json('RESERVER')
-    print js
-    expected = dict(title='TITLE', description='DESCRIPTION', isbn='ISBN', borrower='', reservers=['RESERVER'], _links=[])
-    expected['_links'].append(dict(rel='borrow', href='/borrow/ISBN'))
-    assert_equals(js, json.dumps(expected))
-
-def test_book_to_json_no_borrower_with_one_reserver_by_other():
+def test_links_no_borrower_with_one_reserver_by_reserver():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
 
-    js = book.to_json('ANOTHER')
-    print js
-    expected = dict(title='TITLE', description='DESCRIPTION', isbn='ISBN', borrower='', reservers=['RESERVER'], _links=[])
-    expected['_links'].append(dict(rel='reserve', href='/reserve/ISBN'))
-    assert_equals(js, json.dumps(expected))
+    expected = []
+    expected.append(dict(rel='borrow', href='/borrow/ISBN'))
+    expected.append(dict(rel='cancel_reservation', href='/cancel_reservation/ISBN'))
+    assert_equals(book.links('RESERVER'), expected)
 
-def test_book_to_json_no_borrower_with_many_reservers_by_reserver():
+def test_links_no_borrower_with_one_reserver_by_other():
+    book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.reserve('RESERVER')
+
+    expected = []
+    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
+    assert_equals(book.links('OTHER'), expected)
+
+def test_links_no_borrower_with_many_reservers_by_reserver():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
     book.reserve('RESERVER 2')
     book.reserve('RESERVER 3')
 
-    js = book.to_json('RESERVER')
-    print js
-    expected = dict(title='TITLE', description='DESCRIPTION', isbn='ISBN', borrower='', reservers=['RESERVER', 'RESERVER 2', 'RESERVER 3'], _links=[])
-    expected['_links'].append(dict(rel='borrow', href='/borrow/ISBN'))
-    assert_equals(js, json.dumps(expected))
+    expected = []
+    expected.append(dict(rel='borrow', href='/borrow/ISBN'))
+    expected.append(dict(rel='cancel_reservation', href='/cancel_reservation/ISBN'))
+    assert_equals(book.links('RESERVER'), expected)
 
-def test_book_to_json_no_borrower_with_many_reservers_by_other():
+def test_links_no_borrower_with_many_reservers_by_other():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
     book.reserve('RESERVER 2')
     book.reserve('RESERVER 3')
 
-    js = book.to_json('ANOTHER')
-    print js
-    expected = dict(title='TITLE', description='DESCRIPTION', isbn='ISBN', borrower='', reservers=['RESERVER', 'RESERVER 2', 'RESERVER 3'], _links=[])
-    expected['_links'].append(dict(rel='reserve', href='/reserve/ISBN'))
-    assert_equals(js, json.dumps(expected))
+    expected = []
+    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
+    assert_equals(book.links('OTHER'), expected)
 
-def test_book_to_json_with_borrower():
+def test_links_with_borrower():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER')
-    js = book.to_json()
-    print js
-    expected = dict(title='TITLE', description='DESCRIPTION', isbn='ISBN', borrower='BORROWER', reservers=[], _links=[])
-    expected['_links'].append(dict(rel='reserve', href='/reserve/ISBN'))
-    assert_equals(js, json.dumps(expected))
 
-def test_book_to_json_for_user_who_borrowed():
+    expected = []
+    expected.append(dict(rel='reserve', href='/reserve/ISBN'))
+    assert_equals(book.links('RESERVER'), expected)
+
+def test_links_for_borrower():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER')
-    js = book.to_json(book.borrower)
-    print js
-    expected = dict(title='TITLE', description='DESCRIPTION', isbn='ISBN', borrower='BORROWER', reservers=[], _links=[])
-    expected['_links'].append(dict(rel='return', href='/return/ISBN'))
-    assert_equals(js, json.dumps(expected))
 
+    expected = []
+    expected.append(dict(rel='return', href='/return/ISBN'))
+    assert_equals(book.links('BORROWER'), expected)
+
+def test_links_with_borrower_with_many_reservers_by_reserver():
+    book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER')
+    book.reserve('RESERVER')
+    book.reserve('RESERVER 2')
+    book.reserve('RESERVER 3')
+
+    expected = []
+    expected.append(dict(rel='cancel_reservation', href='/cancel_reservation/ISBN'))
+    assert_equals(book.links('RESERVER'), expected)
