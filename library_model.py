@@ -92,17 +92,19 @@ class Book(object):
         ret = []
         options = self.get_options(for_user)
 
+        ret.append(dict(rel='self', href=prefix + '/books/' + self.isbn))
+
         if options.get(Book.CAN_RESERVE, False):
-            ret.append(dict(rel='reserve', href=prefix + '/book/' + self.isbn + '/reservations'))
+            ret.append(dict(rel='reserve', href=prefix + '/books/' + self.isbn + '/reservations'))
 
         if options.get(Book.CAN_BORROW, False):
-            ret.append(dict(rel='borrow', href=prefix + '/book/' + self.isbn + '/borrower'))
+            ret.append(dict(rel='borrow', href=prefix + '/books/' + self.isbn + '/borrower'))
 
         if options.get(Book.CAN_RETURN, False):
-            ret.append(dict(rel='return', href=prefix + '/book/' + self.isbn + '/return'))
+            ret.append(dict(rel='return', href=prefix + '/books/' + self.isbn + '/return'))
 
         if options.get(Book.CAN_CANCEL, False):
-            ret.append(dict(rel='cancel', href=prefix + '/book/' + self.isbn + '/reservations/' + for_user + '/cancel'))
+            ret.append(dict(rel='cancel', href=prefix + '/books/' + self.isbn + '/reservations/' + for_user + '/cancel'))
 
         return ret
 

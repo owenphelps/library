@@ -217,24 +217,28 @@ def test_links_reserve():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.get_options = mock.method_returning({ Book.CAN_RESERVE: True })
 
-    assert_equals(dict(rel='reserve', href='/book/ISBN/reservations'), book.links('RESERVER')[0])
+    assert_equals(dict(rel='self', href='/books/ISBN'), book.links('RESERVER')[0])
+    assert_equals(dict(rel='reserve', href='/books/ISBN/reservations'), book.links('RESERVER')[1])
 
 def test_links_borrow():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.get_options = mock.method_returning({ Book.CAN_BORROW: True })
 
-    assert_equals(dict(rel='borrow', href='/book/ISBN/borrower'), book.links('SOMEONE')[0])
+    assert_equals(dict(rel='self', href='/books/ISBN'), book.links('SOMEONE')[0])
+    assert_equals(dict(rel='borrow', href='/books/ISBN/borrower'), book.links('SOMEONE')[1])
 
 def test_links_return():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.get_options = mock.method_returning({ Book.CAN_RETURN: True })
 
-    assert_equals(dict(rel='return', href='/book/ISBN/return'), book.links('BORROWER')[0])
+    assert_equals(dict(rel='self', href='/books/ISBN'), book.links('BORROWER')[0])
+    assert_equals(dict(rel='return', href='/books/ISBN/return'), book.links('BORROWER')[1])
 
 def test_links_cancel():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.get_options = mock.method_returning({ Book.CAN_CANCEL: True })
 
-    assert_equals(dict(rel='cancel', href='/book/ISBN/reservations/RESERVER/cancel'), book.links('RESERVER')[0])
+    assert_equals(dict(rel='self', href='/books/ISBN'), book.links('RESERVER')[0])
+    assert_equals(dict(rel='cancel', href='/books/ISBN/reservations/RESERVER/cancel'), book.links('RESERVER')[1])
 
 # ----------------------------------------------------------------------

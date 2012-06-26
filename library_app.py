@@ -39,9 +39,21 @@ def library():
 def books(book_id=None):
     response.set_header('Content-Type', 'application/json')
     prefix = get_prefix(request)
-    bks = [bk.to_json(prefix=prefix) for bk in all_books]
+    if book_id:
+        the_book = None
+        for bk in all_books:
+            if bk.isbn == book_id:
+                the_book = bk
+                break
+        if the_book:
+            return bk.to_json(prefix=prefix)
+        else:
+            response.set_header('Content-Type', 'text/html')
+            response.status = 404
+    else:
+        bks = [bk.to_json(prefix=prefix) for bk in all_books]
 
-    return '[' + ',\n'.join(bks) + ']'
+        return '[' + ',\n'.join(bks) + ']'
 
 debug(True)
 run(host='0.0.0.0', reloader=True)
