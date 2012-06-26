@@ -50,6 +50,7 @@ def books(book_id=None):
         else:
             response.set_header('Content-Type', 'text/html')
             response.status = 404
+            return "Can't find that ISBN."
     else:
         bks = [bk.to_json(prefix=prefix) for bk in all_books]
 
