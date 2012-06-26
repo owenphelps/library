@@ -2,6 +2,7 @@
 import nose
 from nose.tools import raises, assert_equals, assert_in, assert_not_in
 from nose.plugins.skip import SkipTest
+import pyDoubles.framework as mock
 import json
 
 # ----------------------------------------------------------------------
@@ -28,23 +29,23 @@ class Book(object):
     CAN_RETURN  = 'can_return'
     CAN_CANCEL  = 'can_cancel'
 
-    def __init__(self, title, description, isbn, borrower='', reservers=None):
+    def __init__(self, title, description, isbn, borrower='', reservations=None):
         self.title = title
         self.description = description
         self.isbn = isbn
         self.borrower = borrower
-        self.reservers = reservers or []
+        self.reservations = reservations or []
         
     def reserve(self, reserver):
         assert reserver and reserver.strip() != ''
-        if not reserver in self.reservers:
-            self.reservers.append(reserver)
+        if not reserver in self.reservations:
+            self.reservations.append(reserver)
 
     def un_reserve(self, reserver):
         assert reserver and reserver.strip() != ''
-        if not reserver in self.reservers:
+        if not reserver in self.reservations:
             raise NotReservedError('Not reserved by this user')
-        self.reservers.remove(reserver)
+        self.reservations.remove(reserver)
 
     def check_out(self, borrower):
         assert borrower and borrower.strip() != ''
@@ -52,9 +53,9 @@ class Book(object):
         if self.status() == Book.BORROWED:
             raise AlreadyOnLoanError('Already on loan')
 
-        if self.reservers:
-            if self.reservers[0] == borrower:
-                self.reservers.pop(0)
+        if self.reservations:
+            if self.reservations[0] == borrower:
+                self.reservations.pop(0)
             else:
                 raise BorrowingWhileReservedError('Book is reserved')
 
@@ -78,22 +79,22 @@ class Book(object):
     def get_options(self, for_user):
         options = {}
         is_borrower       = self.borrower != '' and for_user == self.borrower
-        is_reserver       = for_user in self.reservers
-        is_first_reserver = is_reserver and self.reservers[0] == for_user
+        is_reserver       = for_user in self.reservations
+        is_first_reserver = is_reserver and self.reservations[0] == for_user
 
         options[Book.CAN_RESERVE] = not(is_borrower or is_reserver)
-        options[Book.CAN_BORROW] = (is_first_reserver or not self.reservers) and not self.borrower
+        options[Book.CAN_BORROW] = (is_first_reserver or not self.reservations) and not self.borrower
         options[Book.CAN_RETURN] = is_borrower
         options[Book.CAN_CANCEL] = is_reserver
 
-        # Only return true values.
+        # Only return true values (makes using things easier).
         for key in options.keys():
             if not options[key]: options.pop(key) 
         return options
 
-    def links(self, for_user='', options=None):
+    def links(self, for_user=''):
         ret = []
-        options = options or self.get_options(for_user)
+        options = self.get_options(for_user)
 
         if options.get(Book.CAN_RESERVE, False):
             ret.append(dict(rel='reserve', href='/book/' + self.isbn + '/reservations'))
@@ -114,9 +115,9 @@ class Book(object):
                   description=self.description,
                   isbn=self.isbn,
                   borrower=self.borrower,
-                  reservers=self.reservers,
+                  reservations=self.reservations,
                   _links=self.links(for_user))
-        return json.dumps(js)
+        return json.dumps(js, indent=2)
 
 # ----------------------------------------------------------------------
 
@@ -141,7 +142,7 @@ def test_book_class_populated_with_borrower_is_borrowed():
 
 def test_book_class_with_reservers():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER', ['RESERVER1', 'RESERVER2'])
-    assert_equals(len(book.reservers), 2)
+    assert_equals(len(book.reservations), 2)
 
 # ----------------------------------------------------------------------
 
@@ -149,25 +150,25 @@ def test_book_can_reserve_new_book():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
 
-    assert_equals(len(book.reservers), 1)
-    assert_in('RESERVER', book.reservers)
+    assert_equals(len(book.reservations), 1)
+    assert_in('RESERVER', book.reservations)
 
 def test_book_can_reserve_new_book_once():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
 
     book.reserve('RESERVER')
-    assert_equals(len(book.reservers), 1)
-    assert_in('RESERVER', book.reservers)
+    assert_equals(len(book.reservations), 1)
+    assert_in('RESERVER', book.reservations)
 
 def test_book_can_reserve_new_book_with_more_than_one_user():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
     book.reserve('RESERVER')
     book.reserve('ANOTHER RESERVER')
 
-    assert_equals(len(book.reservers), 2)
-    assert_equals('RESERVER', book.reservers[0])
-    assert_equals('ANOTHER RESERVER', book.reservers[1])
+    assert_equals(len(book.reservations), 2)
+    assert_equals('RESERVER', book.reservations[0])
+    assert_equals('ANOTHER RESERVER', book.reservations[1])
 
 def test_book_can_un_reserve_book():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
@@ -178,7 +179,7 @@ def test_book_can_un_reserve_book():
     book.un_reserve('ANOTHER RESERVER')
     book.un_reserve('RESERVER')
     book.un_reserve('YET ANOTHER RESERVER')
-    assert_equals(0, len(book.reservers))
+    assert_equals(0, len(book.reservations))
 
 @raises(NotReservedError)
 def test_book_cannot_un_reserve_book_when_not_reserved_by_you():
@@ -215,7 +216,7 @@ def test_book_can_borrow_reserved_book_if_only_reserver():
 
     book.check_out('RESERVER')
 
-    assert_equals(len(book.reservers), 0)
+    assert_equals(len(book.reservations), 0)
 
 def test_book_can_borrow_reserved_book_if_first_reserver():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
@@ -224,8 +225,8 @@ def test_book_can_borrow_reserved_book_if_first_reserver():
 
     book.check_out('RESERVER')
 
-    assert_equals(len(book.reservers), 1)
-    assert_equals('ANOTHER RESERVER', book.reservers[0])
+    assert_equals(len(book.reservations), 1)
+    assert_equals('ANOTHER RESERVER', book.reservations[0])
 
 @raises(BorrowingWhileReservedError)
 def test_book_cannot_borrow_reserved_book_if_later_reserver():
@@ -318,32 +319,33 @@ def test_options_with_borrower_with_many_reservers_by_reserver():
     book.reserve('RESERVER 3')
 
     expected = {}
-    expected[Book.CAN_CANCEL]  = True
+    expected[Book.CAN_CANCEL] = True
     assert_equals(expected, book.get_options('RESERVER'))
 
 # ----------------------------------------------------------------------
 
 def test_links_reserve():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.get_options = mock.method_returning({ Book.CAN_RESERVE: True })
 
-    options = { Book.CAN_RESERVE: True }
-    assert_equals(dict(rel='reserve', href='/book/ISBN/reservations'), book.links('RESERVER', options)[0])
+    assert_equals(dict(rel='reserve', href='/book/ISBN/reservations'), book.links('RESERVER')[0])
 
 def test_links_borrow():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.get_options = mock.method_returning({ Book.CAN_BORROW: True })
 
-    options = { Book.CAN_BORROW: True }
-    assert_equals(dict(rel='borrow', href='/book/ISBN/borrower'), book.links('SOMEONE', options)[0])
+    assert_equals(dict(rel='borrow', href='/book/ISBN/borrower'), book.links('SOMEONE')[0])
 
 def test_links_return():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.get_options = mock.method_returning({ Book.CAN_RETURN: True })
 
-    options = { Book.CAN_RETURN: True }
-    assert_equals(dict(rel='return', href='/book/ISBN/return'), book.links('BORROWER', options)[0])
+    assert_equals(dict(rel='return', href='/book/ISBN/return'), book.links('BORROWER')[0])
 
 def test_links_cancel():
     book = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    book.get_options = mock.method_returning({ Book.CAN_CANCEL: True })
 
-    options = { Book.CAN_CANCEL: True }
-    assert_equals(dict(rel='cancel', href='/book/ISBN/reservations/RESERVER/cancel'), book.links('RESERVER', options)[0])
+    assert_equals(dict(rel='cancel', href='/book/ISBN/reservations/RESERVER/cancel'), book.links('RESERVER')[0])
 
+# ----------------------------------------------------------------------
