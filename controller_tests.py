@@ -3,7 +3,7 @@ from nose.tools import raises, assert_equals, assert_in, assert_not_in
 from nose.plugins.skip import SkipTest
 
 from webtest import TestApp
-from library_app import app
+from controllers import app
 
 global app
 

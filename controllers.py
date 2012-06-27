@@ -1,7 +1,7 @@
 import bottle
 from bottle import route, run, debug, request, response, get, post, abort
 import json
-from library_model import Book
+from models import Book
 from markdown import markdown
 
 def load_books():

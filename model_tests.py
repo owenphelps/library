@@ -5,7 +5,7 @@ from nose.plugins.skip import SkipTest
 import pyDoubles.framework as mock
 import json
 
-from library_model import (Book, AlreadyOnLoanError, BorrowingWhileReservedError,
+from models import (Book, AlreadyOnLoanError, BorrowingWhileReservedError,
                   NotReservedError, NotCheckedOutError, NotTheBorrowerError)
 
 # ----------------------------------------------------------------------
