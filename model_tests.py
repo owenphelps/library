@@ -30,7 +30,7 @@ def test_book_class_populated_with_borrower_is_borrowed():
     assert_equals(book.status(), Book.BORROWED)
 
 def test_book_class_with_reservers():
-    book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER', ['RESERVER1', 'RESERVER2'])
+    book = Book('TITLE', 'DESCRIPTION', 'ISBN', 'BORROWER', reservations=['RESERVER1', 'RESERVER2'])
     assert_equals(len(book.reservations), 2)
 
 # ----------------------------------------------------------------------

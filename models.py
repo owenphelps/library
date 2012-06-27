@@ -25,11 +25,17 @@ class Book(object):
     CAN_RETURN  = 'can_return'
     CAN_CANCEL  = 'can_cancel'
 
-    def __init__(self, title, description, isbn, borrower='', reservations=None):
+    def __init__(self, title, description, isbn, borrower='', author='',
+                 publisher='', small_thumbnail='', thumbnail='',
+                 reservations=None):
         self.title = title
         self.description = description
         self.isbn = isbn
         self.borrower = borrower
+        self.author = author
+        self.publisher = publisher
+        self.small_thumbnail = small_thumbnail
+        self.thumbnail = thumbnail
         self.reservations = reservations or []
         
     def reserve(self, reserver):
