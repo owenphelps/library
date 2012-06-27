@@ -1,7 +1,8 @@
-from bottle import route, run, debug, request, response, get, post
+import bottle
+from bottle import route, run, debug, request, response, get, post, abort
 import json
 from library_model import Book
-
+from markdown import markdown
 
 def load_books():
     json_books = [json.loads(x) for x in open('library.json', 'r').read().splitlines()]
@@ -20,18 +21,30 @@ def test():
     print request.body.read()
     return "Hello again!"
 
-def get_prefix(request):
+def get_prefix(request, path='/library/api'):
     urlparts = request.urlparts
-    return "%s://%s/library/api" % (urlparts[0], urlparts[1])
+    protocol = urlparts[0]
+    domain = urlparts[1]
+    if domain.endswith(':80'):
+        domain = domain[:-3]
+
+    return "%s://%s%s" % (protocol, domain, path)
 
 @get('/library/api/')
 @get('/library/api')
 def library():
     prefix = get_prefix(request)
     return dict(
-        books=prefix + "/books",
-        users=prefix + "/users"
+        documentation=prefix + "/docs",
+        services=dict(
+            books=prefix + "/books",
+            users=prefix + "/users"
+            )
         )
+
+@get('/library/api/docs')
+def docs():
+    return markdown(open('library_app.md', 'r').read())
 
 @get('/library/api/books/<book_id>')
 @get('/library/api/books/')
@@ -49,13 +62,13 @@ def books(book_id=None):
             return bk.to_json(prefix=prefix)
         else:
             response.set_header('Content-Type', 'text/html')
-            response.status = 404
-            return "Can't find that ISBN."
+            abort(404, "Can't find a book with that ISBN ('%s')." % book_id)
     else:
         bks = [bk.to_json(prefix=prefix) for bk in all_books]
 
         return '[' + ',\n'.join(bks) + ']'
 
-debug(True)
-run(host='0.0.0.0', reloader=True)
-
+app = bottle.app()
+if __name__=='__main__':
+    debug(True)
+    bottle.run(app=app, host='0.0.0.0', reloader=True)

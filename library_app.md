@@ -23,10 +23,15 @@ Data
 Links
 -----
 
-* `reserve`
-* `borrow`
-* `return`
-* `cancel`
+* `reserve` <a id="reserve"></a>
+
+  `POST`: with the username of the user making the reservation.
+
+  `GET`: see the list of current reservations.
+
+* `borrow` <a id="borrow"></a>
+* `return` <a id="return"></a>
+* `cancel` <a id="cancel"></a>
 
 Example
 -------
