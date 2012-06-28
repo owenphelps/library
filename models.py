@@ -120,6 +120,10 @@ class Book(object):
                   isbn=self.isbn,
                   borrower=self.borrower,
                   reservations=self.reservations,
+                  author=self.author,
+                  publisher=self.publisher,
+                  small_thumbnail=self.small_thumbnail,
+                  thumbnail=self.thumbnail,
                   _links=self.links(for_user, prefix))
         return json.dumps(js, indent=2)
 

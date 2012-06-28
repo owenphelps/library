@@ -6,7 +6,15 @@ from markdown import markdown
 
 def load_books():
     json_books = [json.loads(x) for x in open('library.json', 'r').read().splitlines()]
-    books = [Book(j['title'], j.get('description', ''), j['ISBN']) for j in json_books]
+    books = [
+        Book(j.get('title', ''), j.get('description', ''), j.get('ISBN', ''),
+             author=j.get('author', ''),
+             publisher=j.get('publisher', ''),
+             small_thumbnail=j.get('small_thumbnail', ''),
+             thumbnail=j.get('thumbnail', '')
+             )
+        for j in json_books
+        ]
     return books
 
 all_books = load_books()
