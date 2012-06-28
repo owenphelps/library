@@ -1,5 +1,4 @@
-import bottle
-from bottle import route, run, debug, request, response, get, post, abort
+from bottle import route, request, response, get, post, abort
 import json
 from models import Book
 from markdown import markdown
@@ -75,8 +74,3 @@ def books(book_id=None):
         bks = [bk.to_json(prefix=prefix) for bk in all_books]
 
         return '[' + ',\n'.join(bks) + ']'
-
-app = bottle.app()
-if __name__=='__main__':
-    debug(True)
-    bottle.run(app=app, host='0.0.0.0', reloader=True)
