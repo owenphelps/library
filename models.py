@@ -8,6 +8,7 @@ class BorrowingWhileReservedError(Exception): pass
 class NotReservedError(Exception): pass
 class NotCheckedOutError(Exception): pass
 class NotTheBorrowerError(Exception): pass
+class NoMatchingBookError(Exception): pass
 
 # ----------------------------------------------------------------------
 
@@ -24,6 +25,8 @@ class Book(object):
     CAN_BORROW  = 'can_borrow'
     CAN_RETURN  = 'can_return'
     CAN_CANCEL  = 'can_cancel'
+
+    _all_books = None
 
     def __init__(self, title, description, isbn, borrower='', author='',
                  publisher='', small_thumbnail='', thumbnail='',
@@ -126,5 +129,30 @@ class Book(object):
                   thumbnail=self.thumbnail,
                   _links=self.links(for_user, prefix))
         return json.dumps(js, indent=2)
+
+    @classmethod
+    def find(cls):
+        if not cls._all_books:
+            json_books = [json.loads(x) for x in open('library.json', 'r').read().splitlines()]
+            books = [
+                Book(j.get('title', ''), j.get('description', ''), j.get('ISBN', ''),
+                     author=j.get('author', ''),
+                     publisher=j.get('publisher', ''),
+                     small_thumbnail=j.get('small_thumbnail', ''),
+                     thumbnail=j.get('thumbnail', '')
+                     )
+                for j in json_books
+                ]
+            cls._all_books = books
+        return cls._all_books
+
+    @classmethod
+    def find_one(cls, isbn=None):
+        ret = None
+        for bk in cls.find():
+            if (not isbn) or (bk.isbn == isbn):
+                ret = bk
+                break
+        return ret
 
 # ----------------------------------------------------------------------

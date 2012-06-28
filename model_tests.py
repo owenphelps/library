@@ -242,3 +242,14 @@ def test_links_cancel():
     assert_equals(dict(rel='/docs#cancel', href='/books/ISBN/reservations/RESERVER/cancel'), book.links('RESERVER')[1])
 
 # ----------------------------------------------------------------------
+
+def test_book_find():
+    raise SkipTest()
+
+def test_book_find_one_works():
+    raise SkipTest()
+
+def test_book_find_one_fails():
+    raise SkipTest()
+
+# ----------------------------------------------------------------------
