@@ -1,4 +1,4 @@
-from bottle import route, request, response, get, post, abort
+from bottle import route, request, response, get, post, put, abort
 import json
 from models import Book
 from markdown import markdown
@@ -14,7 +14,7 @@ def get_prefix(request, path='/library/api'):
 
 @get('/library/api/')
 @get('/library/api')
-def library():
+def library_api_root():
     prefix = get_prefix(request)
     return dict(
         documentation=prefix + "/docs",
@@ -28,20 +28,42 @@ def library():
 def docs():
     return markdown(open('library_app.md', 'r').read())
 
-@get('/library/api/books/<book_id>')
 @get('/library/api/books/')
 @get('/library/api/books')
-def books(book_id=None):
+def books():
     response.set_header('Content-Type', 'application/json')
     prefix = get_prefix(request)
-    if book_id:
-        the_book = Book.find_one(isbn=book_id)
-        if the_book:
-            return bk.to_json(prefix=prefix)
-        else:
-            response.set_header('Content-Type', 'text/html')
-            abort(404, "Can't find a book with that ISBN ('%s')." % book_id)
-    else:
-        bks = [bk.to_json(prefix=prefix) for bk in Book.find()]
+    bks = [bk.to_json(prefix=prefix) for bk in Book.find()]
+    return '[' + ',\n'.join(bks) + ']'
 
-        return '[' + ',\n'.join(bks) + ']'
+@get('/library/api/books/<book_id>')
+def book_show(book_id):
+    response.set_header('Content-Type', 'application/json')
+    prefix = get_prefix(request)
+    bk = Book.find_one(isbn=book_id)
+    if bk:
+        return bk.to_json(prefix=prefix)
+    else:
+        response.set_header('Content-Type', 'text/html')
+        abort(404, "Can't find a book with that ISBN ('%s')." % book_id)
+
+@put('/library/api/books/<book_id>')
+def books_put(book_id):
+    response.set_header('Content-Type', 'application/json')
+    prefix = get_prefix(request)
+    print request.get_header('Content-Type')
+    print request.body.getvalue()
+    print 'hello'
+    print request.json #json.loads(request.body.getvalue())
+    print 'hello again'
+    bk_input = request.json
+    book = Book.find_one(isbn=bk_input['isbn'])
+    if book:
+        book.title = bk_input['title']
+        book.description = bk_input['description']
+    else:
+        response.status = 201
+        book = Book(bk_input['title'], bk_input['description'], bk_input['isbn'])
+
+    response.set_header('Location', prefix + '/books/' + book_id)
+    return book.to_json(prefix)
