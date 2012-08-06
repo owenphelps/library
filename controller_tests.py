@@ -5,6 +5,8 @@ from nose.plugins.skip import SkipTest
 from webtest import TestApp
 from app import app
 
+import json
+
 def setup():
     global app
     app = TestApp(app)
@@ -22,7 +24,45 @@ def test_no_book_found_throws_404():
     res = app.get('/library/api/books/NOTAREALISBN', status=404)
 
 def test_new_book_works():
-    res = app.put('/library/api/books/12345', '{"title":"TITLE", "description":"DESCRIPTION", "isbn":"ISBN"}', {'Content-Type': 'application/json; charset=utf-8'})
+    bk = dict(title="TITLE", description="DESCRIPTION", isbn="ISBN")
+    res = app.put_json('/library/api/books/12345', bk, {'Content-Type': 'application/json; charset=utf-8'})
     assert_equals(res.status_code, 201)
-    print res.json
+    assert_equals(res.headers['Location'], 'http://localhost/library/api/books/ISBN')
     assert_equals(res.json['isbn'], 'ISBN')
+
+def test_update_book_works():
+    bk = dict(title="TITLE", description="DESCRIPTION", isbn="ISBN")
+    res = app.put_json('/library/api/books/12345', bk, {'Content-Type': 'application/json; charset=utf-8'})
+    bk['title'] = 'NEW TITLE'
+    res = app.put_json('/library/api/books/12345', bk, {'Content-Type': 'application/json; charset=utf-8'})
+    assert_equals(res.status_code, 200)
+    assert_equals(res.headers['Location'], 'http://localhost/library/api/books/ISBN')
+    assert_equals(res.json['title'], 'NEW TITLE')
+
+def test_reserve_book_works():
+    raise SkipTest()
+
+def test_cancel_book_works():
+    raise SkipTest()
+
+def test_cancel_reserved_by_other_fails():
+    raise SkipTest()
+
+def test_borrow_book_works():
+    raise SkipTest()
+
+def test_return_book_works():
+    raise SkipTest()
+
+def test_return_borrowed_by_other_fails():
+    raise SkipTest()
+
+def test_return_not_borrowed_fails():
+    raise SkipTest()
+
+def test_borrow_borrowed_book_fails():
+    raise SkipTest()
+
+def test_list_many_books_uses_pagination():
+    raise SkipTest()
+

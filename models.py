@@ -16,6 +16,36 @@ def equivalent_lists(first, second):
     assert_equals(sorted(first), sorted(second))
 
 # ----------------------------------------------------------------------
+class Repository(object):
+    def __init__(self):
+        self.books = []
+    def find(self):
+        return self.books[:]
+#         if not cls._all_books:
+#             json_books = [json.loads(x) for x in open('library.json', 'r').read().splitlines()]
+#             books = [
+#                 Book(j.get('title', ''), j.get('description', ''), j.get('ISBN', ''),
+#                      author=j.get('author', ''),
+#                      publisher=j.get('publisher', ''),
+#                      small_thumbnail=j.get('small_thumbnail', ''),
+#                      thumbnail=j.get('thumbnail', '')
+#                      )
+#                 for j in json_books
+#                 ]
+#             cls._all_books = books
+#        return cls._all_books
+
+    def find_one(self, isbn):
+        ret = None
+        for bk in self.find():
+            if (not isbn) or (bk.isbn == isbn):
+                ret = bk
+                break
+        return ret
+    def store(self, book):
+        self.books.append(book)
+
+# ----------------------------------------------------------------------
 
 class Book(object):
     BORROWED  = 'borrowed'
@@ -26,7 +56,7 @@ class Book(object):
     CAN_RETURN  = 'can_return'
     CAN_CANCEL  = 'can_cancel'
 
-    _all_books = None
+    repository = None
 
     def __init__(self, title, description, isbn, borrower='', author='',
                  publisher='', small_thumbnail='', thumbnail='',
@@ -132,27 +162,20 @@ class Book(object):
 
     @classmethod
     def find(cls):
-        if not cls._all_books:
-            json_books = [json.loads(x) for x in open('library.json', 'r').read().splitlines()]
-            books = [
-                Book(j.get('title', ''), j.get('description', ''), j.get('ISBN', ''),
-                     author=j.get('author', ''),
-                     publisher=j.get('publisher', ''),
-                     small_thumbnail=j.get('small_thumbnail', ''),
-                     thumbnail=j.get('thumbnail', '')
-                     )
-                for j in json_books
-                ]
-            cls._all_books = books
-        return cls._all_books
+        if not cls.repository:
+            cls.repository = Repository()
+        return cls.repository.find()
 
     @classmethod
     def find_one(cls, isbn=None):
-        ret = None
-        for bk in cls.find():
-            if (not isbn) or (bk.isbn == isbn):
-                ret = bk
-                break
-        return ret
+        if not cls.repository:
+            cls.repository = Repository()
+        return cls.repository.find_one(isbn)
+
+    @classmethod
+    def store(cls, book):
+        if not cls.repository:
+            cls.repository = Repository()
+        cls.repository.store(book)
 
 # ----------------------------------------------------------------------

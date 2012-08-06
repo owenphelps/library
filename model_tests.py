@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import nose
-from nose.tools import raises, assert_equals, assert_in, assert_not_in
+from nose.tools import raises, assert_equals, assert_in, assert_not_in, assert_is_not_none, assert_is_none
 from nose.plugins.skip import SkipTest
 import pyDoubles.framework as mock
 import json
 
-from models import (Book, AlreadyOnLoanError, BorrowingWhileReservedError,
+from models import (Repository, Book, AlreadyOnLoanError, BorrowingWhileReservedError,
                   NotReservedError, NotCheckedOutError, NotTheBorrowerError)
 
 # ----------------------------------------------------------------------
@@ -243,13 +243,55 @@ def test_links_cancel():
 
 # ----------------------------------------------------------------------
 
-def test_book_find():
-    raise SkipTest()
+def test_repository_find():
+    r = Repository()
 
-def test_book_find_one_works():
-    raise SkipTest()
+def test_repository_find_one_fails():
+    r = Repository()
+    maybe_bk = r.find_one('NOTAREALISBN')
+    assert_is_none(maybe_bk)
 
-def test_book_find_one_fails():
-    raise SkipTest()
+def test_repository_find_empty():
+    r = Repository()
+    bk = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    r.store(bk)
+    bk = Book('TITLE2', 'DESCRIPTION2', 'ISBN2')
+    r.store(bk)
+    bk = Book('TITLE3', 'DESCRIPTION3', 'ISBN3')
+    r.store(bk)
+
+    books = r.find()
+    assert_equals(len(books), 3)
+
+def test_repository_find_nonempty():
+    r = Repository()
+    books = r.find()
+    assert_equals(len(books), 0)
+
+def test_repository_save_new_one_works():
+    r = Repository()
+    bk = Book('NEWTITLE', 'NEWDESCRIPTION', 'NEWISBN')
+    r.store(bk)
+    maybe_bk = r.find_one('NEWISBN')
+    assert_is_not_none(maybe_bk)
+    assert_equals(maybe_bk.isbn, 'NEWISBN')
+    assert_equals(maybe_bk.title, 'NEWTITLE')
+
+def test_repository_update_works():
+    r = Repository()
+    bk = Book('TITLE', 'DESCRIPTION', 'ISBN')
+    r.store(bk)
+    bk = r.find_one('ISBN')
+    bk.title = 'NEWTITLE'
+    bk.isbn = 'NEWISBN'
+    r.store(bk)
+
+    maybe_bk = r.find_one('ISBN')
+    assert_is_none(maybe_bk)
+
+    maybe_bk = r.find_one('NEWISBN')
+    assert_is_not_none(maybe_bk)
+    assert_equals(maybe_bk.isbn, 'NEWISBN')
+    assert_equals(maybe_bk.title, 'NEWTITLE')
 
 # ----------------------------------------------------------------------

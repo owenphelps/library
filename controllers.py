@@ -48,14 +48,9 @@ def book_show(book_id):
         abort(404, "Can't find a book with that ISBN ('%s')." % book_id)
 
 @put('/library/api/books/<book_id>')
-def books_put(book_id):
+def book_put(book_id):
     response.set_header('Content-Type', 'application/json')
     prefix = get_prefix(request)
-    print request.get_header('Content-Type')
-    print request.body.getvalue()
-    print 'hello'
-    print request.json #json.loads(request.body.getvalue())
-    print 'hello again'
     bk_input = request.json
     book = Book.find_one(isbn=bk_input['isbn'])
     if book:
@@ -64,6 +59,6 @@ def books_put(book_id):
     else:
         response.status = 201
         book = Book(bk_input['title'], bk_input['description'], bk_input['isbn'])
-
-    response.set_header('Location', prefix + '/books/' + book_id)
+    Book.store(book)
+    response.set_header('Location', prefix + '/books/' + book.isbn)
     return book.to_json(prefix)
