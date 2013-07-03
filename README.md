@@ -1,5 +1,5 @@
-playground
-==========
+library
+=======
 
-Just stuff for me to play with
+Experiments with a hypermedia API and the bottle framework.
 
