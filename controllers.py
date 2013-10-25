@@ -26,7 +26,8 @@ def library_api_root():
 
 @get('/library/api/docs')
 def docs():
-    return markdown(open('library_app.md', 'r').read())
+    from os.path import split, join
+    return markdown(open(join(split(__file__)[0], 'library_app.md'), 'r').read())
 
 @get('/library/api/books/')
 @get('/library/api/books')

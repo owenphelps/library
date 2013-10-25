@@ -2,6 +2,7 @@ import bottle
 import controllers
 
 app = bottle.app()
+application = app
 bottle.debug(True)
 
 if __name__=='__main__':
